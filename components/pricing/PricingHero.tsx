@@ -54,6 +54,5 @@ export function PricingHero() {
         </div>
       </div>
     </section>
-  )
   );
 }
