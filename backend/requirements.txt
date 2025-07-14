@@ -1,0 +1,9 @@
+flask
+python-telegram-bot
+requests
+boto3
+word2number
+pandas 
+scikit-learn 
+numpy
+PyPDF2
