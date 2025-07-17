@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
-import DashboardHeader from './DashboardHeader';
-import StatsCards from './StatsCards';
-import InvoiceUpload from './InvoiceUpload';
-import RecentScans from './RecentScans';
+import React from 'react';
+import { Metadata } from 'next';
+// Fixed imports - using default imports instead of named imports
+import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import InvoiceUpload from '@/components/dashboard/InvoiceUpload';
+import RecentScans from '@/components/dashboard/RecentScans';
+import StatsCards from '@/components/dashboard/StatsCards';
 
-const Dashboard: React.FC = () => {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+export const metadata: Metadata = {
+  title: 'Dashboard - Invoice Fraud Detection',
+  description: 'Monitor and analyze invoice fraud detection results',
+};
+
+export default function DashboardPage() {
+  const [refreshTrigger, setRefreshTrigger] = React.useState(0);
 
   const handleUploadComplete = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -31,6 +38,4 @@ const Dashboard: React.FC = () => {
       </main>
     </div>
   );
-};
-
-export default Dashboard;
+}
