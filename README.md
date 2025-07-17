@@ -40,7 +40,6 @@ Satarkta is a comprehensive fraud detection platform that uses AI and machine le
 - Python 3.8+
 - Node.js 16+
 - AWS Account (for S3 storage)
-- Sandbox API Account (for GSTIN and bank verification)
 
 ### Backend Setup
 1. Navigate to backend directory:
