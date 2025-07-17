@@ -9,7 +9,7 @@ const DashboardHeader: React.FC = () => {
           <div className="flex items-center">
             <Shield className="w-8 h-8 text-blue-600 mr-3" />
             <h1 className="text-xl font-bold text-gray-900">
-              Invoice Fraud Detection
+              Satarkta
             </h1>
           </div>
 
