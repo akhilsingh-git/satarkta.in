@@ -1,10 +1,10 @@
 "use client";
 
 import { Metadata } from 'next';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { InvoiceUpload } from '@/components/dashboard/InvoiceUpload';
-import { RecentScans } from '@/components/dashboard/RecentScans';
-import { StatsCards } from '@/components/dashboard/StatsCards';
+import DashboardHeader  from '@/components/dashboard/DashboardHeader';
+import  InvoiceUpload  from '@/components/dashboard/InvoiceUpload';
+import  RecentScans  from '@/components/dashboard/RecentScans';
+import  StatsCards  from '@/components/dashboard/StatsCards';
 
 export default function DashboardPage() {
   return (
