@@ -41,7 +41,7 @@ export const useRecentScans = (limit: number = 10): UseRecentScansReturn => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/recent-scans?limit=${limit}`);
+      const response = await fetch(`http://127.0.0.1:5001/api/recent-scans?limit=${limit}`);
   
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

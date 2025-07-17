@@ -73,15 +73,15 @@ const InvoiceUpload: React.FC<InvoiceUploadProps> = ({ onUploadComplete }) => {
     formData.append('file', file);
 
     try {
-      const response = await fetch('http://127.0.0.1:5001/process-invoice', {
+      const response = await fetch('http://127.0.0.1:5001/api/process-invoice', {
         method: 'POST',
         body: formData,
       });
 
       const result = await response.json();
 
-      if (response.ok) {
-        setUploadResult(result);
+      if (response.ok && result.success) {
+        setUploadResult(result.data);
         if (onUploadComplete) {
           onUploadComplete();
         }

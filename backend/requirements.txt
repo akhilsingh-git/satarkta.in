@@ -1,4 +1,5 @@
 flask
+flask-cors
 python-telegram-bot
 requests
 boto3
@@ -7,3 +8,4 @@ pandas
 scikit-learn 
 numpy
 PyPDF2
+python-dotenv
