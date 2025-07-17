@@ -42,7 +42,7 @@ bot_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
 app = Flask(__name__)
 
 # THEN add CORS support
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app)
 
 # Initialize duplicate detector
 duplicate_detector = DuplicatePaymentDetector(S3_BUCKET)
