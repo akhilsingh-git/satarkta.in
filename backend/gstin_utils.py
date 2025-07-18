@@ -305,13 +305,14 @@ def verify_gstin_and_get_details(gstin: str, api_key: str, api_secret: str) -> D
         url = "https://api.sandbox.co.in/gst/compliance/taxpayer/gstin"
         payload = {"gstin": gstin}
         
+        
         response = requests.post(url, json=payload, headers=headers, timeout=30)
-        
-        if response.status_code == 403:
-            result['error'] = "API access restricted"
-            logger.error(f"API access restricted for GSTIN verification: {response.text}")
-            return result
-        
+        if response.status_code == 400 and "Credential" in response.text:
+            return {
+            'is_valid': False,
+            'vendor_name': None,
+            'error': "API endpoint now requires AWS SigV4 signed headers, not just Bearer token"
+        }
         if response.status_code == 200:
             data = response.json()
             
