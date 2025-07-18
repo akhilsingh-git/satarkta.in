@@ -254,17 +254,10 @@ const BankVerification: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    
-                    {result.message && (
-                      <div className="col-span-2">
-                        <span className="font-medium">Message:</span>
-                        <div className="text-sm text-gray-600">{result.message}</div>
-                      </div>
-                    )}
                   </div>
                   
                   {result.verification_id && (
-              disabled={loading || !formData.account_number || formData.ifsc_code.length !== 11}
+                    <div className="mt-3 pt-3 border-t">
                       <span className="text-xs text-gray-500">
                         Transaction ID: {result.verification_id}
                       </span>
