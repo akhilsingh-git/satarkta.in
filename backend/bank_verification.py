@@ -38,7 +38,13 @@ class BankAccountVerifier:
             response.raise_for_status()
             
             data = response.json()
-            return data.get("access_token")
+            # Extract the access_token from the response
+            access_token = data.get("data", {}).get("access_token")
+            if access_token:
+                return access_token
+            
+            logger.error(f"No access token in response: {data}")
+            return None
             
         except Exception as e:
             logger.error(f"Authentication failed: {e}")
@@ -66,50 +72,72 @@ class BankAccountVerifier:
                     "status": "AUTH_ERROR"
                 }
             
+            # Extract bank code from IFSC (first 4 characters)
+            if len(ifsc_code) < 4:
+                return {
+                    "success": False,
+                    "error": "Invalid IFSC code format",
+                    "status": "INVALID_IFSC"
+                }
+            
+            bank_code = ifsc_code[:4]
+            
+            # Construct the URL as per the API documentation
+            url = f"{self.base_url}/bank/{ifsc_code}/accounts/{account_number}/penniless-verify"
+            
             headers = {
                 "accept": "application/json",
-                "authorization": f"Bearer {token}",
+                "authorization": token,  # Use the token directly
                 "x-api-key": self.api_key,
-                "x-api-version": self.api_version,
-                "content-type": "application/json"
+                "x-accept-cache": "true",
+                "x-api-version": self.api_version
             }
             
-            payload = {
-                "account_number": account_number,
-                "ifsc": ifsc_code
-            }
+            logger.info(f"Making request to: {url}")
             
-            # Add account holder name if provided
-            if account_holder_name:
-                payload["account_holder_name"] = account_holder_name
+            response = requests.get(url, headers=headers, timeout=30)
             
-            response = requests.post(
-                f"{self.base_url}/bank_account_verification",
-                headers=headers,
-                json=payload,
-                timeout=30
-            )
+            logger.info(f"Response status: {response.status_code}")
+            logger.info(f"Response text: {response.text}")
             
             if response.status_code == 200:
                 data = response.json()
                 
-                return {
-                    "success": True,
-                    "account_exists": data.get("account_exists", False),
-                    "account_holder_name": data.get("account_holder_name"),
-                    "name_match": data.get("name_match"),
-                    "bank_name": data.get("bank_name"),
-                    "branch_name": data.get("branch_name"),
-                    "account_type": data.get("account_type"),
-                    "verification_id": data.get("verification_id"),
-                    "verified_at": datetime.now().isoformat(),
-                    "status": "VERIFIED" if data.get("account_exists") else "NOT_FOUND"
-                }
+                if data.get("code") == 200:
+                    response_data = data.get("data", {})
+                    account_exists = response_data.get("account_exists", False)
+                    name_at_bank = response_data.get("name_at_bank", "")
+                    
+                    # Calculate name match if account holder name is provided
+                    name_match = None
+                    if account_holder_name and name_at_bank:
+                        # Simple name matching - can be enhanced
+                        name_match = account_holder_name.upper().strip() == name_at_bank.upper().strip()
+                    
+                    return {
+                        "success": True,
+                        "account_exists": account_exists,
+                        "account_holder_name": name_at_bank,
+                        "name_match": name_match,
+                        "bank_name": self._get_bank_name_from_ifsc(ifsc_code),
+                        "branch_name": None,  # Not provided in this API
+                        "account_type": None,  # Not provided in this API
+                        "verification_id": data.get("transaction_id"),
+                        "verified_at": datetime.now().isoformat(),
+                        "status": "VERIFIED" if account_exists else "ACCOUNT_NOT_FOUND",
+                        "message": response_data.get("message", "")
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": f"API returned code: {data.get('code')}",
+                        "status": "API_ERROR"
+                    }
             
             elif response.status_code == 400:
                 return {
                     "success": False,
-                    "error": "Invalid account details",
+                    "error": "Invalid account details or IFSC code",
                     "status": "INVALID_DETAILS"
                 }
             elif response.status_code == 404:
@@ -117,6 +145,12 @@ class BankAccountVerifier:
                     "success": False,
                     "error": "Account not found",
                     "status": "ACCOUNT_NOT_FOUND"
+                }
+            elif response.status_code == 401:
+                return {
+                    "success": False,
+                    "error": "Authentication failed - check API credentials",
+                    "status": "AUTH_ERROR"
                 }
             else:
                 logger.error(f"Bank verification API error: {response.status_code} - {response.text}")
@@ -140,6 +174,24 @@ class BankAccountVerifier:
                 "status": "ERROR"
             }
     
+    def _get_bank_name_from_ifsc(self, ifsc_code: str) -> str:
+        """Get bank name from IFSC code"""
+        bank_codes = {
+            "ICIC": "ICICI Bank",
+            "SBIN": "State Bank of India",
+            "HDFC": "HDFC Bank",
+            "AXIS": "Axis Bank",
+            "KOTAK": "Kotak Mahindra Bank",
+            "INDB": "Indian Bank",
+            "PUNB": "Punjab National Bank",
+            "UBIN": "Union Bank of India",
+            "CNRB": "Canara Bank",
+            "BARB": "Bank of Baroda"
+        }
+        
+        bank_code = ifsc_code[:4] if len(ifsc_code) >= 4 else ""
+        return bank_codes.get(bank_code, f"Bank ({bank_code})")
+    
     def verify_ifsc(self, ifsc_code: str) -> Dict:
         """
         Verify IFSC code and get bank details
@@ -160,36 +212,42 @@ class BankAccountVerifier:
             
             headers = {
                 "accept": "application/json",
-                "authorization": f"Bearer {token}",
+                "authorization": token,
                 "x-api-key": self.api_key,
                 "x-api-version": self.api_version,
             }
             
-            response = requests.get(
-                f"{self.base_url}/ifsc/{ifsc_code}",
-                headers=headers,
-                timeout=15
-            )
+            # Use the IFSC lookup endpoint
+            url = f"{self.base_url}/ifsc/{ifsc_code}"
+            
+            response = requests.get(url, headers=headers, timeout=15)
             
             if response.status_code == 200:
                 data = response.json()
-                return {
-                    "success": True,
-                    "bank_name": data.get("bank"),
-                    "branch_name": data.get("branch"),
-                    "address": data.get("address"),
-                    "city": data.get("city"),
-                    "state": data.get("state"),
-                    "contact": data.get("contact"),
-                    "rtgs": data.get("rtgs"),
-                    "neft": data.get("neft"),
-                    "imps": data.get("imps"),
-                    "upi": data.get("upi")
-                }
+                if data.get("code") == 200:
+                    ifsc_data = data.get("data", {})
+                    return {
+                        "success": True,
+                        "bank_name": ifsc_data.get("bank"),
+                        "branch_name": ifsc_data.get("branch"),
+                        "address": ifsc_data.get("address"),
+                        "city": ifsc_data.get("city"),
+                        "state": ifsc_data.get("state"),
+                        "contact": ifsc_data.get("contact"),
+                        "rtgs": ifsc_data.get("rtgs"),
+                        "neft": ifsc_data.get("neft"),
+                        "imps": ifsc_data.get("imps"),
+                        "upi": ifsc_data.get("upi")
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": "Invalid IFSC code"
+                    }
             else:
                 return {
                     "success": False,
-                    "error": "Invalid IFSC code"
+                    "error": "Invalid IFSC code or API error"
                 }
                 
         except Exception as e:

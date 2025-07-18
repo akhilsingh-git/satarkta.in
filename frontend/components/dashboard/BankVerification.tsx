@@ -70,6 +70,15 @@ const BankVerification: React.FC = () => {
     if (!formData.account_number || !formData.ifsc_code) {
       return;
     }
+    
+    // Validate IFSC format
+    if (formData.ifsc_code.length !== 11) {
+      setResult({
+        success: false,
+        error: 'IFSC code must be 11 characters long'
+      });
+      return;
+    }
 
     setLoading(true);
     setResult(null);
@@ -158,12 +167,18 @@ const BankVerification: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="e.g., SBIN0001234"
                 maxLength={11}
+                minLength={11}
                 style={{ textTransform: 'uppercase' }}
                 required
               />
               {ifscDetails && (
                 <div className="text-sm text-green-600 mt-1">
                   ✓ {ifscDetails.bank_name} - {ifscDetails.branch_name}
+                </div>
+              )}
+              {formData.ifsc_code.length > 0 && formData.ifsc_code.length !== 11 && (
+                <div className="text-sm text-red-600 mt-1">
+                  IFSC code must be exactly 11 characters
                 </div>
               )}
             </div>
@@ -231,20 +246,6 @@ const BankVerification: React.FC = () => {
                       </div>
                     )}
                     
-                    {result.branch_name && (
-                      <div>
-                        <span className="font-medium">Branch:</span>
-                        <div>{result.branch_name}</div>
-                      </div>
-                    )}
-                    
-                    {result.account_type && (
-                      <div>
-                        <span className="font-medium">Account Type:</span>
-                        <div>{result.account_type}</div>
-                      </div>
-                    )}
-                    
                     {formData.account_holder_name && result.name_match !== undefined && (
                       <div>
                         <span className="font-medium">Name Match:</span>
@@ -253,12 +254,19 @@ const BankVerification: React.FC = () => {
                         </div>
                       </div>
                     )}
+                    
+                    {result.message && (
+                      <div className="col-span-2">
+                        <span className="font-medium">Message:</span>
+                        <div className="text-sm text-gray-600">{result.message}</div>
+                      </div>
+                    )}
                   </div>
                   
                   {result.verification_id && (
-                    <div className="mt-3 pt-3 border-t">
+              disabled={loading || !formData.account_number || formData.ifsc_code.length !== 11}
                       <span className="text-xs text-gray-500">
-                        Verification ID: {result.verification_id}
+                        Transaction ID: {result.verification_id}
                       </span>
                     </div>
                   )}

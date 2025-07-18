@@ -382,6 +382,13 @@ def verify_bank_account_api():
                 'error': 'Account number and IFSC code are required'
             }), 400
         
+        # Validate IFSC format
+        if len(ifsc_code) != 11:
+            return jsonify({
+                'success': False,
+                'error': 'IFSC code must be 11 characters long'
+            }), 400
+        
         # Verify bank account
         result = bank_verifier.verify_bank_account(
             account_number=account_number,
